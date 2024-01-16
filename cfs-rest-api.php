@@ -16,6 +16,7 @@ add_filter('rest_prepare_review', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_special', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_faq', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_resolution', 'add_custom_fields_to_api_response', 10, 2);
+add_filter('rest_prepare_shipping_time', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('woocommerce_rest_prepare_product_object', 'add_custom_fields_to_api_response', 10, 3);
 
 function add_custom_fields_to_api_response($response, $post)
@@ -44,12 +45,12 @@ function add_custom_fields_to_api_response($response, $post)
         }
     }
 
-    // echo json_encode($term_fields);
     $cfs = [];
     $expectingTypes = [
         'tab',
     ];
     foreach ($fields as $key => $field) {
+
         if (in_array($field['type'], $expectingTypes)) {
             continue;
         }
@@ -58,6 +59,8 @@ function add_custom_fields_to_api_response($response, $post)
         }
         if ($field['type'] == 'term') {
             $fields = CFS()->get($field['name'], $post_id);
+
+            $fields = reindex_array_of_any_deep($fields);
 
             if(!$fields){
                 continue;
@@ -76,9 +79,12 @@ function add_custom_fields_to_api_response($response, $post)
         if ($field['type'] == 'loop') {
             $loopValues = CFS()->get($field['name'], $post_id);
 
+            
             if (!$loopValues) {
                 $loopValues = [];
             }
+            
+            $loopValues = reindex_array_of_any_deep($loopValues);
 
             foreach ($loopValues as $in_key => $loopValue) {
                 foreach ($loopValue as $key => $valueArray) {
@@ -101,16 +107,23 @@ function add_custom_fields_to_api_response($response, $post)
 
     }
 
-    $taxonomies = get_taxonomies([
-        'object_type' => ['diginity'],
-    ]);
+    $taxonomies = get_taxonomies();
 
-    foreach ($taxonomies as $key => $taxonomy) {
-        $response->data[$taxonomy] = get_the_terms($post_id, $taxonomy);
+    // print_r($taxonomies);
+
+    $gottenTaxonomies = [];
+
+    foreach ($taxonomies as $taxonomy) {
+
+        // print_r(get_the_terms($post_id, $taxonomy));
+        $terms = get_the_terms($post_id, $taxonomy);
+        if($terms){
+            $gottenTaxonomies[$taxonomy] = $terms;
+        }
     }
 
     $response->data['cfs'] = $cfs;
-    $response->data['taxonomies'] = $taxonomies;
+    $response->data['taxonomies'] = $gottenTaxonomies;
 
     return $response;
 }
