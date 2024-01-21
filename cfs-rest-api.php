@@ -34,9 +34,6 @@ function add_custom_fields_to_api_response($response, $post)
         'post_id' => $post_id
     ]);
 
-    // echo json_encode($fields);
-
-
     $term_fields = [];
 
     foreach ($fields as $value) {
@@ -60,8 +57,6 @@ function add_custom_fields_to_api_response($response, $post)
         if ($field['type'] == 'term') {
             $fields = CFS()->get($field['name'], $post_id);
 
-            $fields = reindex_array_of_any_deep($fields);
-
             if(!$fields){
                 continue;
             }
@@ -84,8 +79,6 @@ function add_custom_fields_to_api_response($response, $post)
                 $loopValues = [];
             }
             
-            $loopValues = reindex_array_of_any_deep($loopValues);
-
             foreach ($loopValues as $in_key => $loopValue) {
                 foreach ($loopValue as $key => $valueArray) {
 
@@ -109,8 +102,6 @@ function add_custom_fields_to_api_response($response, $post)
 
     $taxonomies = get_taxonomies();
 
-    // print_r($taxonomies);
-
     $gottenTaxonomies = [];
 
     foreach ($taxonomies as $taxonomy) {
@@ -126,34 +117,4 @@ function add_custom_fields_to_api_response($response, $post)
     $response->data['taxonomies'] = $gottenTaxonomies;
 
     return $response;
-}
-
-add_action('rest_after_insert_post', 'custom_editor_before_insert', 10, 3);
-add_action('rest_after_insert_review', 'custom_editor_before_insert', 10, 3);
-add_action('rest_after_insert_faq', 'custom_editor_before_insert', 10, 3);
-
-function custom_editor_before_insert($post, $request)
-{
-    $body = json_decode($request->get_body(), true);
-    if (!isset($body['cfs'])) {
-        return;
-    }
-
-    $fields = CFS()->find_fields(array('post_id' => $post->ID));
-
-    if (empty($fields)) {
-        return;
-    }
-
-    $fileds_names = array_map(function ($field) {
-        return $field['name'];
-    }, $fields);
-
-
-    foreach ($body['cfs'] as $key => $value) {
-        if (!in_array($key, $fileds_names)) {
-            continue;
-        }
-        CFS()->save([$key => $value], ['ID' => $post->ID]);
-    }
 }
