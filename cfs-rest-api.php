@@ -10,15 +10,12 @@ Author: Alexander Malstev
 
 add_filter('rest_prepare_page', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_post', 'add_custom_fields_to_api_response', 10, 2);
-add_filter('pre_get_settings', 'add_custom_fields_to_api_response', 10, 2);
-add_filter('rest_prepare_diginity', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_review', 'add_custom_fields_to_api_response', 10, 2);
-add_filter('rest_prepare_special', 'add_custom_fields_to_api_response', 10, 2);
-add_filter('rest_prepare_faq', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_resolution', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('rest_prepare_shipping_time', 'add_custom_fields_to_api_response', 10, 2);
 add_filter('woocommerce_rest_prepare_product_object', 'add_custom_fields_to_api_response', 10, 3);
 
+add_filter('cfs-rest-api-fields', 'add_custom_fields_to_api_response', 1, 2);
 function add_custom_fields_to_api_response($response, $post)
 {
     $post_id = 0;
@@ -115,6 +112,7 @@ function add_custom_fields_to_api_response($response, $post)
 
     $response->data['cfs'] = $cfs;
     $response->data['taxonomies'] = $gottenTaxonomies;
+    unset($response->data['meta_data']);
 
     return $response;
 }
